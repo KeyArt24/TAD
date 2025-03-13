@@ -1,0 +1,114 @@
+from math import *
+import numpy
+
+
+NN_list_G1 = {'AA': -1.00, 'TT': -1.00, 'CC': -1.84, 'GG': -1.84, 'AT': -0.88, 'TA': -0.58, 'AC': -1.44, 'CA':
+              -1.45, 'AG': -1.28, 'GA': -1.30, 'CG': -2.17, 'GC': -2.24, 'TC': -1.30, 'CT': -1.28, 'TG': -1.45, 'GT': -1.44}
+
+NN_list_S3 = {'AA': -22.2, 'TT': -22.2, 'CC': -19.9, 'GG': -19.9, 'AT': -20.4, 'TA': -21.3, 'AC': -22.4, 'CA': -22.7,
+              'AG': -21.0, 'GA': -22.2, 'CG': -27.2, 'GC': -24.4, 'TC': -22.2, 'CT': -21.0, 'TG': -22.7, 'GT': -22.4}
+
+NN_list_H3 = {'AA': -7.9, 'TT': -7.9, 'CC': -8, 'GG': -8, 'AT': -7.2, 'TA': -7.2, 'AC': -8.4, 'CA':
+              -8.5, 'AG': -7.8, 'GA': -8.2, 'CG': -10.6, 'GC': -9.8, 'TC': -8.2, 'CT': -7.8, 'TG': -8.5, 'GT': -8.4}
+
+
+def DnaFraction(Ct, T, DeltaS, DeltaH, CtK=50, CtMg=3, R=1.987):
+    """
+    Returns the fraction of dsDNA in a solution containing equal concentrations
+    of two complementary ssDNA oligos, as a function of total [DNA],
+    temperature, entropy of annealing, and enthalpy of annealing.
+
+    Default units are mole, calorie, kelvin. For other unit systems, supply
+    the appropriate value for the optional gas constant parameter.
+
+    T can be a single value or a numpy.array of values.
+    """
+    # Compute Ct * Keq
+    salt = (CtK/1000) + 4 * (CtMg/1000)**0.5
+    CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH /
+                           (R*T-16.6*log10(salt/(1.0+0.7*salt))))
+
+    # Compute f
+    f = (1 + CtKeq - numpy.sqrt(1 + 2*CtKeq)) / CtKeq
+    return f
+
+
+def deltaS_DNA(sequence):
+    sum_S1 = 0
+    if len(sequence) > 0:
+        if str(sequence[0][-1]).upper() == 'A' or str(sequence[0][-1]).upper() == 'T':
+            sum_S1 += -9.0
+        elif str(sequence[0][-1]).upper() == 'C' or str(sequence[0][-1]).upper() == 'G':
+            sum_S1 += -5.9
+        for i in range(len(sequence)-1):
+            sum_S1 += NN_list_S3[str(sequence[i:i+2]).upper()]
+        sum_S1 += 0
+    return sum_S1
+
+
+def deltaH_DNA(sequence):
+    sum_H1 = 0
+    if len(sequence) > 0:
+        if str(sequence[0][-1]).upper() == 'A' or str(sequence[0][-1]).upper() == 'T':
+            sum_H1 += 0.4
+        for i in range(len(sequence)-1):
+            sum_H1 += NN_list_H3[str(sequence[i:i+2]).upper()]
+        sum_H1 += 0
+    return sum_H1
+
+
+def deltaG_DNA(sequence):
+    sum_G = 0
+    if len(sequence) > 0:
+        if str(sequence[0][-1]).upper() == 'A' or str(sequence[0][-1]).upper() == 'T':
+            sum_G += -2
+        for i in range(len(sequence)-1):
+            sum_G += NN_list_G1[str(sequence[i:i+2]).upper()]
+        sum_G += 2.2
+    return sum_G
+
+
+def temp_DNA_melt(sequence, CtDNA, CtK, CtMg):
+    if len(sequence) > 0:
+        salt = (CtK/1000) + 4 * (CtMg/1000)**0.5
+        deltaH = deltaH_DNA(sequence)*1000
+        deltaG = deltaG_DNA(sequence)*1000
+        Tm = ((298.2*deltaH)/(deltaH-deltaG+(1.99*298.2)*log(CtDNA/1000000))
+              ) + (16.6*log10(salt/(1.0+0.7*salt))) - 269.3
+        return Tm
+
+
+def GC_features(sequence):
+    countG = sequence.count('G')
+    countC = sequence.count('C')
+    result = (countG+countC)/len(sequence)
+    return result
+
+
+def dimers_analyze(seq1, seq2):
+    result = []
+    rows = len(seq1)
+    cols = len(seq2)
+    seq2 = seq2[::-1]
+    for i in range(1, cols + rows):
+        sub_result = []
+        bounds = ''
+        start_column = max(0, i - rows)
+        end_column = min(i, cols)
+        for j in range(start_column, end_column):
+            n = rows-i-1+j+1
+            m = j
+            if (seq1[n] == 'A' and seq2[m] == 'T') or (seq1[n] == 'T' and seq2[m] == 'A'):
+                bounds += 'I'
+            elif (seq1[n] == 'C' and seq2[m] == 'G') or (seq1[n] == 'G' and seq2[m] == 'C'):
+                bounds += 'I'
+            else:
+                bounds += '-'
+
+        if bounds.count('I') > 2:
+            sub_result.append(f"{' ' * (m) + "5'-" + seq1}-3'")
+            sub_result.append(f"   {' ' * max(n, m) + bounds}")
+            sub_result.append(f"{' ' * (n) + "3'-" + seq2}-5'")
+            result.append(sub_result)
+
+    return result
