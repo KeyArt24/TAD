@@ -2,7 +2,7 @@ import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from PyQt6.QtWidgets import (QApplication, QWidget, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout,
-                             QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget)
+                             QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget, QLayoutItem)
 from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import QFont
 from tm_oligo import deltaS_DNA, deltaH_DNA, temp_DNA_melt, DnaFraction, dimers_analyze
@@ -226,6 +226,7 @@ class MainWindow(QMainWindow):
         widget_00 = QPushButton()
         widget_01 = QVBoxLayout()
         self.widget_03 = QTextEdit()
+        self.df_dx = QLabel()
         widget_04 = QPushButton()
         button_add = QPushButton('Добавить образец')
         main_lay = QVBoxLayout()
@@ -268,7 +269,7 @@ class MainWindow(QMainWindow):
         self.scrollArea.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setStyleSheet("""background-color: gray""")
+        self.scrollArea.setStyleSheet("""background-color: rgb(0, 32, 78)""")
         self.scrollArea.verticalScrollBar().setStyleSheet("""
     QScrollBar:vertical
     {
@@ -348,8 +349,11 @@ class MainWindow(QMainWindow):
             alignment: center}
             QTabBar::tab  {background-color:rgb(220, 220, 220); border-radius: 4px; height: 20px; width: 150px; margin: 2px;}
             QTabWidget::pane {position; absolute}""")
+
         self.tab_lay.addTab(widget_00, 'График температуры')
+        self.tab_lay.addTab(self.df_dx, 'Функция dF/dx')
         self.tab_lay.addTab(self.widget_03, 'Димеры')
+
         lay_UP.addWidget(self.tab_lay, 4)
         lay_UP.addWidget(widget_04, 1)
         self.scrollWidget.setLayout(self.lay_samples)
@@ -358,15 +362,17 @@ class MainWindow(QMainWindow):
         self.lay_DW.addWidget(self.scrollArea)
 
         self.toolbar = TBar()
+        self.lay_bar = QVBoxLayout()
+        self.lay_bar.addWidget(self.toolbar)
 
-        self.addToolBar(self.toolbar)
+        main_lay.addLayout(self.lay_bar)
         main_lay.addLayout(lay_UP, 2)
         main_lay.addLayout(self.lay_DW, 2)
 
         # главное окно
         container = QWidget()
         container.setLayout(main_lay)
-        self.setStyleSheet("background-color: rgb(110, 110, 110)")
+        self.setStyleSheet("background-color: rgb(0, 32, 78)")
         self.setCentralWidget(container)
         self.setWindowTitle('TAD')
 
@@ -428,4 +434,5 @@ class MainWindow(QMainWindow):
 app = QApplication(sys.argv)
 w = MainWindow()
 w.show()
+app.setStyle('Fusion')
 app.exec()
