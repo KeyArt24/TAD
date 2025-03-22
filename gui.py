@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QMainWindow, QPushButton, QH
 from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import QFont
 from tm_oligo import deltaS_DNA, deltaH_DNA, temp_DNA_melt, DnaFraction, dimers_analyze
+from tool_bar import TBar
 import numpy
 import matplotlib
 from threading import Thread
@@ -356,6 +357,9 @@ class MainWindow(QMainWindow):
         self.lay_DW.addWidget(button_add)
         self.lay_DW.addWidget(self.scrollArea)
 
+        self.toolbar = TBar()
+
+        self.addToolBar(self.toolbar)
         main_lay.addLayout(lay_UP, 2)
         main_lay.addLayout(self.lay_DW, 2)
 
