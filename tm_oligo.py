@@ -31,6 +31,17 @@ def DnaFraction(Ct, T, DeltaS, DeltaH, CtK=50, CtMg=3, R=1.987):
     f = (1 + CtKeq - numpy.sqrt(1 + 2*CtKeq)) / CtKeq
     return f
 
+def middles(arr):
+    """
+    Returns a new numpy array, 1 element shorter than the input array,
+    whose values come from averaging each two adjacent values in the input.
+    """
+    result = []
+    for i in range(0, len(arr) - 1):
+        element = (arr[i] + arr[i+1]) / 2.0
+        result.append(element)
+
+    return numpy.array(result)
 
 def deltaS_DNA(sequence):
     sum_S1 = 0

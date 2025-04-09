@@ -5,29 +5,34 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QMainWindow, QPushButton, QH
                              QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget, QLayoutItem)
 from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import QFont
-from tm_oligo import deltaS_DNA, deltaH_DNA, temp_DNA_melt, DnaFraction, dimers_analyze
+from tm_oligo import deltaS_DNA, deltaH_DNA, temp_DNA_melt, DnaFraction, dimers_analyze, middles
 from tool_bar import TBar
 import numpy
 import matplotlib
 from threading import Thread
 matplotlib.use('QtAgg')
 
+
 list_samples = {}
+dif_samples = {}
 seq_samples = {}
 temp = numpy.array(range(0, 100)) + 273.15
 temp_plot = numpy.array(range(0, 100))
+temp_dif = numpy.array(middles(temp)) - 273.15
 concentration_DNA = 0.4
 concentration_K = 50
 concentration_Mg = 3
 
-
 class MplCanvas(FigureCanvasQTAgg):
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
+        self.temp = []
+        self.data = []
+
         fig = Figure(figsize=(width, height), dpi=dpi,
                      facecolor='lightgray', tight_layout=True)
         self.axes = fig.add_subplot()
-        self.axes.plot(temp_plot, [1]*100)
+        self.axes.plot(self.temp, self.data)
         self.axes.grid(which='both')
         self.axes.set_xlabel('Температура в °C')
         self.axes.tick_params(axis='x', rotation=30)
@@ -125,7 +130,9 @@ class Sample(QLabel):
         try:
             melt_data = DnaFraction(concentration_DNA/100000, temp, deltaS_DNA(self.input.text(
             )), deltaH_DNA(self.input.text())*1000, float(concentration_K), float(concentration_Mg))
+            dif_data = numpy.diff(melt_data)
             list_samples.update({self.label.text(): melt_data})
+            dif_samples.update({self.label.text(): numpy.array(-1 * dif_data)})
             seq_samples.update({self.label.text(): self.input.text()})
         except KeyError:
             self.label_features.setText(
@@ -179,18 +186,19 @@ class Thread(QThread):
 
     def run(self):
         self.sc.axes.cla()
-        if len(list_samples) > 0:
-            for key, values in list_samples.items():
-                self.sc.axes.plot(temp_plot, values, label=key)
+        if len(self.sc.data) > 0:
+            for key, values in self.sc.data.items():
+                print(len(self.sc.temp), len(values))
+                self.sc.axes.plot(self.sc.temp, values, label=key)
                 self.sc.axes.legend()
         else:
-            self.sc.axes.plot(temp_plot, [0 for i in range(100)])
+            self.sc.axes.plot(
+                self.sc.temp, [0 for i in range(len(self.sc.temp))])
 
         self.sc.axes.set_xlabel('Температура в °C')
         self.sc.axes.set_ylabel('Фракция двухцепочечной ДНК')
         self.sc.axes.grid(which='both', linestyle='--', drawstyle='steps')
         self.sc.axes.set_xticks(numpy.arange(0, 101, step=5))
-        self.sc.axes.axhline(y=0.5, color='r')
         self.sc.draw()
 
 
@@ -223,10 +231,11 @@ class MainWindow(QMainWindow):
         self.slider_Mg.setTickPosition(QSlider.TickPosition.TicksBothSides)
 
         lay_conditions = QVBoxLayout()
-        widget_00 = QPushButton()
+        widget_00 = QLabel()
         widget_01 = QVBoxLayout()
         self.widget_03 = QTextEdit()
         self.df_dx = QLabel()
+        self.df_dx_sc2 = QVBoxLayout()
         widget_04 = QPushButton()
         button_add = QPushButton('Добавить образец')
         main_lay = QVBoxLayout()
@@ -240,8 +249,18 @@ class MainWindow(QMainWindow):
         # plot tm
 
         self.sc = MplCanvas(self, width=5, height=4, dpi=75)
+        self.sc.temp = temp_plot
+        self.sc.data = list_samples
         self.toolbar = NavigationToolbar2QT(self.sc)
         self.sc_thread = Thread(mainwindow=self.sc)
+
+        # plot tm df/dx
+
+        self.sc2 = MplCanvas(self, width=5, height=4, dpi=75)
+        self.sc2.temp = temp_dif
+        self.sc2.data = dif_samples
+        self.toolbar2 = NavigationToolbar2QT(self.sc2)
+        self.sc_thread2 = Thread(mainwindow=self.sc2)
 
         # найтрока расположения и стиль виджетов
         self.data_conc_Mg.setStyleSheet(
@@ -341,6 +360,8 @@ class MainWindow(QMainWindow):
         widget_04.setLayout(lay_conditions)
         widget_00.setLayout(widget_01)
         widget_01.addWidget(self.sc)
+        self.df_dx_sc2.addWidget(self.sc2)
+        self.df_dx.setLayout(self.df_dx_sc2)
 
         self.tab_lay.setMovable(True)
         self.tab_lay.setStyleSheet(
@@ -362,6 +383,9 @@ class MainWindow(QMainWindow):
         self.lay_DW.addWidget(self.scrollArea)
 
         self.toolbar = TBar()
+
+        self.toolbar.button_save.triggered.connect(self.save_data)
+
         self.lay_bar = QVBoxLayout()
         self.lay_bar.addWidget(self.toolbar)
 
@@ -379,6 +403,10 @@ class MainWindow(QMainWindow):
         # потоки
 
     # функции
+
+    def save_data(self):
+        self.toolbar.save_data(data=str(seq_samples)+'\n' +
+                               self.widget_03.toPlainText())
 
     def sample_add(self):
         self.count += 1
@@ -401,8 +429,14 @@ class MainWindow(QMainWindow):
         self.data_conc_Mg.textChanged.connect(self.sample.is_sample_selected)
         self.data_conc_Mg.textChanged.connect(self.thread_update_plot)
 
+        for n in dif_samples.values():
+            print(numpy.round(n, 10))
+
+        print(temp_dif)
+
     def thread_update_plot(self):
         self.sc_thread.start()
+        self.sc_thread2.start()
 
     def dimer_analyze(self):
         self.widget_03.setText(self.sample.input.text)
@@ -429,6 +463,10 @@ class MainWindow(QMainWindow):
             self.slider_Mg.setValue(round(value))
         else:
             self.slider_Mg.setValue(10)
+
+
+
+
 
 
 app = QApplication(sys.argv)
