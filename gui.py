@@ -23,18 +23,21 @@ concentration_DNA = 0.4
 concentration_K = 50
 concentration_Mg = 3
 
+
 class MplCanvas(FigureCanvasQTAgg):
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         self.temp = []
         self.data = []
+        self.name_x = ''
+        self.name_y = ''
 
         fig = Figure(figsize=(width, height), dpi=dpi,
                      facecolor='lightgray', tight_layout=True)
         self.axes = fig.add_subplot()
         self.axes.plot(self.temp, self.data)
         self.axes.grid(which='both')
-        self.axes.set_xlabel('Температура в °C')
+        self.axes.set_xlabel(self.name_x)
         self.axes.tick_params(axis='x', rotation=30)
         super(MplCanvas, self).__init__(fig)
 
@@ -132,7 +135,7 @@ class Sample(QLabel):
             )), deltaH_DNA(self.input.text())*1000, float(concentration_K), float(concentration_Mg))
             dif_data = numpy.diff(melt_data)
             list_samples.update({self.label.text(): melt_data})
-            dif_samples.update({self.label.text(): numpy.array(-1 * dif_data)})
+            dif_samples.update({self.label.text(): numpy.abs(dif_data)})
             seq_samples.update({self.label.text(): self.input.text()})
         except KeyError:
             self.label_features.setText(
@@ -151,6 +154,7 @@ class Sample(QLabel):
             try:
                 del list_samples[self.label.text()]
                 del seq_samples[self.label.text()]
+                del dif_samples[self.label.text()]
             except KeyError:
                 pass
 
@@ -188,15 +192,14 @@ class Thread(QThread):
         self.sc.axes.cla()
         if len(self.sc.data) > 0:
             for key, values in self.sc.data.items():
-                print(len(self.sc.temp), len(values))
                 self.sc.axes.plot(self.sc.temp, values, label=key)
                 self.sc.axes.legend()
         else:
             self.sc.axes.plot(
                 self.sc.temp, [0 for i in range(len(self.sc.temp))])
 
-        self.sc.axes.set_xlabel('Температура в °C')
-        self.sc.axes.set_ylabel('Фракция двухцепочечной ДНК')
+        self.sc.axes.set_xlabel(self.sc.name_x)
+        self.sc.axes.set_ylabel(self.sc.name_y)
         self.sc.axes.grid(which='both', linestyle='--', drawstyle='steps')
         self.sc.axes.set_xticks(numpy.arange(0, 101, step=5))
         self.sc.draw()
@@ -284,6 +287,7 @@ class MainWindow(QMainWindow):
         button_add.setFixedHeight(50)
         button_add.setStyleSheet("background-color: lightgray")
         widget_00.setStyleSheet("background-color: lightgray")
+        self.df_dx.setStyleSheet("background-color: lightgray")
         widget_04.setStyleSheet("background-color: lightgray")
         self.scrollArea.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -360,7 +364,9 @@ class MainWindow(QMainWindow):
         widget_04.setLayout(lay_conditions)
         widget_00.setLayout(widget_01)
         widget_01.addWidget(self.sc)
+        widget_01.addWidget(self.toolbar)
         self.df_dx_sc2.addWidget(self.sc2)
+        self.df_dx_sc2.addWidget(self.toolbar2)
         self.df_dx.setLayout(self.df_dx_sc2)
 
         self.tab_lay.setMovable(True)
@@ -383,7 +389,6 @@ class MainWindow(QMainWindow):
         self.lay_DW.addWidget(self.scrollArea)
 
         self.toolbar = TBar()
-
         self.toolbar.button_save.triggered.connect(self.save_data)
 
         self.lay_bar = QVBoxLayout()
@@ -405,8 +410,8 @@ class MainWindow(QMainWindow):
     # функции
 
     def save_data(self):
-        self.toolbar.save_data(data=str(seq_samples)+'\n' +
-                               self.widget_03.toPlainText())
+        self.toolbar.save_data(data=str(seq_samples) +
+                               '\n' + self.widget_03.toPlainText())
 
     def sample_add(self):
         self.count += 1
@@ -430,9 +435,9 @@ class MainWindow(QMainWindow):
         self.data_conc_Mg.textChanged.connect(self.thread_update_plot)
 
         for n in dif_samples.values():
-            print(numpy.round(n, 10))
-
-        print(temp_dif)
+            round_n = numpy.round(n, 3)
+            ex_n = numpy.exp2(round_n)
+            print(round_n)
 
     def thread_update_plot(self):
         self.sc_thread.start()
@@ -463,10 +468,6 @@ class MainWindow(QMainWindow):
             self.slider_Mg.setValue(round(value))
         else:
             self.slider_Mg.setValue(10)
-
-
-
-
 
 
 app = QApplication(sys.argv)
