@@ -388,11 +388,12 @@ class MainWindow(QMainWindow):
         self.lay_DW.addWidget(button_add)
         self.lay_DW.addWidget(self.scrollArea)
 
-        self.toolbar = TBar()
-        self.toolbar.button_save.triggered.connect(self.save_data)
+        self.bar = TBar()
+        self.bar.button_save.triggered.connect(self.save_data)
+        self.bar.button_open.triggered.connect(self.open_data)
 
         self.lay_bar = QVBoxLayout()
-        self.lay_bar.addWidget(self.toolbar)
+        self.lay_bar.addWidget(self.bar)
 
         main_lay.addLayout(self.lay_bar)
         main_lay.addLayout(lay_UP, 2)
@@ -410,8 +411,15 @@ class MainWindow(QMainWindow):
     # функции
 
     def save_data(self):
-        self.toolbar.save_data(data=str(seq_samples) +
-                               '\n' + self.widget_03.toPlainText())
+        self.bar.save_data(data=str(seq_samples) +
+                           '\n' + self.widget_03.toPlainText())
+
+    def open_data(self):
+        data = self.bar.open_file()
+        for line in data.split('\n'):
+            if len(line.split()) == 2:
+                self.sample_add()
+                self.sample.input.setText(line.split()[1])
 
     def sample_add(self):
         self.count += 1

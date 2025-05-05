@@ -22,4 +22,5 @@ class TBar(QToolBar):
 
     def open_file(self):
         window = QFileDialog().getOpenFileNames()
-        print(window)
+        with open(*window[0], 'r', encoding='utf-8') as file:
+            return file.read()
