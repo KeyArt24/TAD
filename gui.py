@@ -2,7 +2,7 @@ import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from PyQt6.QtWidgets import (QApplication, QWidget, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout,
-                             QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget, QLayoutItem)
+                             QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget)
 from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import QFont
 from tm_oligo import deltaS_DNA, deltaH_DNA, temp_DNA_melt, DnaFraction, dimers_analyze, middles
@@ -19,7 +19,7 @@ seq_samples = {}
 temp = numpy.array(range(0, 100)) + 273.15
 temp_plot = numpy.array(range(0, 100))
 temp_dif = numpy.array(middles(temp)) - 273.15
-concentration_DNA = 0.4
+concentration_DNA = 0.25
 concentration_K = 50
 concentration_Mg = 3
 
@@ -128,10 +128,11 @@ class Sample(QLabel):
                 'Значение концентрации ионов и ДНК должно быть больше 0')
 
     def sample_seq(self):
+        concentration_DNA = w.data_conc_DNA.text()
         concentration_K = w.data_conc_K.text()
         concentration_Mg = w.data_conc_Mg.text()
         try:
-            melt_data = DnaFraction(concentration_DNA/100000, temp, deltaS_DNA(self.input.text(
+            melt_data = DnaFraction(float(concentration_DNA)/1000000, temp, deltaS_DNA(self.input.text(
             )), deltaH_DNA(self.input.text())*1000, float(concentration_K), float(concentration_Mg))
             dif_data = numpy.diff(melt_data)
             list_samples.update({self.label.text(): melt_data})
@@ -218,6 +219,13 @@ class MainWindow(QMainWindow):
         self.data_conc_K = QLineEdit(str(concentration_K))
         self.label_conc_Mg = QLabel('Концентрация Мg (мМ)')
         self.data_conc_Mg = QLineEdit(str(concentration_Mg))
+
+        self.slider_conc = QSlider(Qt.Orientation.Horizontal)
+        self.slider_conc.setValue(int(concentration_DNA*100))
+        self.slider_conc.setMinimum(1)
+        self.slider_conc.setMaximum(100)
+        self.slider_conc.setSingleStep(1)
+        self.slider_conc.setTickPosition(QSlider.TickPosition.TicksBothSides)
 
         self.slider_K = QSlider(Qt.Orientation.Horizontal)
         self.slider_K.setValue(concentration_K)
@@ -343,6 +351,8 @@ class MainWindow(QMainWindow):
 
         # подключение функций
         button_add.clicked.connect(self.sample_add)
+        self.slider_conc.valueChanged.connect(self.change_conc)
+        self.data_conc_DNA.textChanged.connect(self.changed_slide_conc)
         self.slider_K.valueChanged.connect(self.changed_K)
         self.data_conc_K.textChanged.connect(self.changed_slide_K)
         self.slider_Mg.valueChanged.connect(self.changed_Mg)
@@ -355,6 +365,7 @@ class MainWindow(QMainWindow):
         # подключение виджетов
         lay_conditions.addWidget(self.label_conc_DNA)
         lay_conditions.addWidget(self.data_conc_DNA)
+        lay_conditions.addWidget(self.slider_conc)
         lay_conditions.addWidget(self.label_conc_K)
         lay_conditions.addWidget(self.data_conc_K)
         lay_conditions.addWidget(self.slider_K)
@@ -416,10 +427,11 @@ class MainWindow(QMainWindow):
 
     def open_data(self):
         data = self.bar.open_file()
-        for line in data.split('\n'):
-            if len(line.split()) == 2:
-                self.sample_add()
-                self.sample.input.setText(line.split()[1])
+        if data != False:
+            for line in data.split('\n'):
+                if len(line.split()) == 2:
+                    self.sample_add()
+                    self.sample.input.setText(line.split()[1])
 
     def sample_add(self):
         self.count += 1
@@ -432,7 +444,10 @@ class MainWindow(QMainWindow):
             self.sample.is_sample_selected)
         self.sample.input.textChanged.connect(self.thread_update_plot)
         self.sample.button_del.clicked.connect(self.thread_update_plot)
+
         self.data_conc_DNA.textChanged.connect(self.sample.sample_features)
+        self.data_conc_DNA.textChanged.connect(self.sample.is_sample_selected)
+        self.data_conc_DNA.textChanged.connect(self.thread_update_plot)
 
         self.data_conc_K.textChanged.connect(self.sample.sample_features)
         self.data_conc_K.textChanged.connect(self.sample.is_sample_selected)
@@ -441,11 +456,6 @@ class MainWindow(QMainWindow):
         self.data_conc_Mg.textChanged.connect(self.sample.sample_features)
         self.data_conc_Mg.textChanged.connect(self.sample.is_sample_selected)
         self.data_conc_Mg.textChanged.connect(self.thread_update_plot)
-
-        for n in dif_samples.values():
-            round_n = numpy.round(n, 3)
-            ex_n = numpy.exp2(round_n)
-            print(round_n)
 
     def thread_update_plot(self):
         self.sc_thread.start()
@@ -464,6 +474,18 @@ class MainWindow(QMainWindow):
             self.slider_K.setValue(int(value))
         else:
             self.slider_K.setValue(1)
+
+    def change_conc(self):
+        concentration_DNA = self.slider_conc.value()/100
+        self.data_conc_DNA.setText(str(concentration_DNA))
+
+    def changed_slide_conc(self):
+        value = self.data_conc_DNA.text()
+        if value != '':
+            value = float(value)*100
+            self.slider_conc.setValue(round(value))
+        else:
+            self.slider_conc.setValue(10)
 
     def changed_Mg(self):
         concentration_Mg = self.slider_Mg.value()/10

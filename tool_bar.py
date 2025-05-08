@@ -1,6 +1,5 @@
 from PyQt6.QtWidgets import QToolBar, QFileDialog
 from PyQt6.QtGui import QAction
-import os
 
 
 class TBar(QToolBar):
@@ -22,5 +21,8 @@ class TBar(QToolBar):
 
     def open_file(self):
         window = QFileDialog().getOpenFileNames()
-        with open(*window[0], 'r', encoding='utf-8') as file:
-            return file.read()
+        if len(window[0]) > 0:
+            with open(*window[0], 'r', encoding='utf-8') as file:
+                return file.read()
+        else:
+            return False

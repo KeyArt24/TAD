@@ -1,14 +1,14 @@
 from math import *
 import numpy
 
-NN_list_G1 = {'AA': -1.00, 'TT': -1.00, 'CC': -1.84, 'GG': -1.84, 'AT': -0.88, 'TA': -0.58, 'AC': -1.44, 'CA':
-              -1.45, 'AG': -1.28, 'GA': -1.30, 'CG': -2.17, 'GC': -2.24, 'TC': -1.30, 'CT': -1.28, 'TG': -1.45, 'GT': -1.44}
+NN_list_G = {'AA': -0.55, 'TT': -0.55, 'CC': -1.25, 'GG': -1.25, 'AT': -0.28, 'TA': -0.16, 'AC': -0.89, 'CA':
+             -1.00, 'AG': -0.91, 'GA': -0.87, 'CG': -1.25, 'GC': -1.31, 'TC': -0.87, 'CT': -0.91, 'TG': -1.00, 'GT': -0.89}
 
-NN_list_S3 = {'AA': -22.2, 'TT': -22.2, 'CC': -19.9, 'GG': -19.9, 'AT': -20.4, 'TA': -21.3, 'AC': -22.4, 'CA': -22.7,
-              'AG': -21.0, 'GA': -22.2, 'CG': -27.2, 'GC': -24.4, 'TC': -22.2, 'CT': -21.0, 'TG': -22.7, 'GT': -22.4}
+NN_list_S = {'AA': -19.2, 'TT': -19.2, 'CC': -8.9, 'GG': -8.9, 'AT': -29.4, 'TA': -13.3, 'AC': -26.8, 'CA': -38.8,
+             'AG': -7.9, 'GA': -13.0, 'CG': -16.1, 'GC': -9.3, 'TC': -13.0, 'CT': -7.9, 'TG': -38.8, 'GT': -26.8}
 
-NN_list_H3 = {'AA': -7.9, 'TT': -7.9, 'CC': -8, 'GG': -8, 'AT': -7.2, 'TA': -7.2, 'AC': -8.4, 'CA':
-              -8.5, 'AG': -7.8, 'GA': -8.2, 'CG': -10.6, 'GC': -9.8, 'TC': -8.2, 'CT': -7.8, 'TG': -8.5, 'GT': -8.4}
+NN_list_H = {'AA': -6.5, 'TT': -6.5, 'CC': -4.0, 'GG': -4.0, 'AT': -9.4, 'TA': -4.3, 'AC': -13.1, 'CA':
+             -13.1, 'AG': -3.4, 'GA': -4.9, 'CG': -6.4, 'GC': -4.2, 'TC': -4.9, 'CT': -3.4, 'TG': -13.1, 'GT': -9.2}
 
 
 def DnaFraction(Ct, T, DeltaS, DeltaH, CtK=50, CtMg=3, R=1.987):
@@ -24,11 +24,13 @@ def DnaFraction(Ct, T, DeltaS, DeltaH, CtK=50, CtMg=3, R=1.987):
     """
     # Compute Ct * Keq
     salt = (CtK/1000) + 4 * (CtMg/1000)**0.5
-    CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH /(R*T-16.6*log10(salt/(1.0+0.7*salt))))
+    CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH /
+                           (R*T-16.6*log10(salt/(1.0+0.7*salt))))
 
     # Compute f
     f = (1 + CtKeq - numpy.sqrt(1 + 2*CtKeq)) / CtKeq
     return f
+
 
 def middles(arr):
     """
@@ -42,38 +44,43 @@ def middles(arr):
 
     return numpy.array(result)
 
+
 def deltaS_DNA(sequence):
-    sum_S1 = 0
+    sum_S = 0
     if len(sequence) > 0:
         if str(sequence[0][-1]).upper() == 'A' or str(sequence[0][-1]).upper() == 'T':
-            sum_S1 += -9.0
+            sum_S += 0
         elif str(sequence[0][-1]).upper() == 'C' or str(sequence[0][-1]).upper() == 'G':
-            sum_S1 += -5.9
+            sum_S += 0
         for i in range(len(sequence)-1):
-            sum_S1 += NN_list_S3[str(sequence[i:i+2]).upper()]
-        sum_S1 += 0
-    return sum_S1
+            sum_S += NN_list_S[str(sequence[i:i+2]).upper()]
+        sum_S += 0
+    return sum_S
 
 
 def deltaH_DNA(sequence):
-    sum_H1 = 0
+    sum_H = 0
     if len(sequence) > 0:
         if str(sequence[0][-1]).upper() == 'A' or str(sequence[0][-1]).upper() == 'T':
-            sum_H1 += 0.4
+            sum_H += 0
+        elif str(sequence[0][-1]).upper() == 'C' or str(sequence[0][-1]).upper() == 'G':
+            sum_H += 0
         for i in range(len(sequence)-1):
-            sum_H1 += NN_list_H3[str(sequence[i:i+2]).upper()]
-        sum_H1 += 0
-    return sum_H1
+            sum_H += NN_list_H[str(sequence[i:i+2]).upper()]
+        sum_H += 0
+    return sum_H
 
 
 def deltaG_DNA(sequence):
     sum_G = 0
     if len(sequence) > 0:
         if str(sequence[0][-1]).upper() == 'A' or str(sequence[0][-1]).upper() == 'T':
-            sum_G += -2
+            sum_G += 0
+        elif str(sequence[0][-1]).upper() == 'C' or str(sequence[0][-1]).upper() == 'G':
+            sum_G += 0
         for i in range(len(sequence)-1):
-            sum_G += NN_list_G1[str(sequence[i:i+2]).upper()]
-        sum_G += 2.2
+            sum_G += NN_list_G[str(sequence[i:i+2]).upper()]
+        sum_G += 0
     return sum_G
 
 
@@ -113,6 +120,8 @@ def dimers_analyze(seq1, seq2):
                 bounds += 'I'
             else:
                 bounds += '-'
+
+        bounds = bounds.replace('-I-', '-*-')
 
         if bounds.count('I') > 2:
             sub_result.append(f"{' ' * (m) + "5'-" + seq1}-3'")
