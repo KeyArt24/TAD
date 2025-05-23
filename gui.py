@@ -4,8 +4,8 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from PyQt6.QtWidgets import (QApplication, QWidget, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout,
                              QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget)
 from PyQt6.QtCore import Qt, QThread
-from PyQt6.QtGui import QFont
-from tm_oligo import deltaS_DNA, deltaH_DNA, temp_DNA_melt, DnaFraction, dimers_analyze, middles
+from PyQt6.QtGui import QFont, QIcon
+from tm_oligo import deltaS_DNA, deltaH_DNA, deltaG_DNA, temp_DNA_melt, GC_features, DnaFraction, dimers_analyze, middles
 from tool_bar import TBar
 import numpy
 import matplotlib
@@ -16,9 +16,9 @@ matplotlib.use('QtAgg')
 list_samples = {}
 dif_samples = {}
 seq_samples = {}
-temp = numpy.array(range(0, 100)) + 273.15
-temp_plot = numpy.array(range(0, 100))
-temp_dif = numpy.array(middles(temp)) - 273.15
+temp = numpy.array([i * 0.1 for i in range(0, 1000)]) + 278.15
+temp_plot = numpy.array([i * 0.1 for i in range(0, 1000)])
+temp_dif = numpy.array(middles(temp)) - 278.15
 concentration_DNA = 0.25
 concentration_K = 50
 concentration_Mg = 3
@@ -51,7 +51,7 @@ class Sample(QLabel):
         self.label = QLabel('SAMPLE')
         self.input = QLineEdit()
         self.label_features = QLabel(
-            'Свойства: длина в нк. = 0, deltaS = 0, deltaH = 0, Tm = 0 °C, Ta ~ 0 °C')
+            'Свойства: длина в нк. = 0, GC = 0%, deltaS = 0, deltaH = 0, deltaG = 0, Tm = 0 °C, Ta ~ 0 °C')
         self.button_del = QPushButton(' УДАЛИТЬ ')
         self.button_homo_dimer = QPushButton(' Гомодимеры ')
         self.button_hetero_dimer = QPushButton(' Гетеродимеры ')
@@ -113,12 +113,14 @@ class Sample(QLabel):
         concentration_K = w.data_conc_K.text()
         concentration_Mg = w.data_conc_Mg.text()
         try:
+            GC = GC_features(self.input.text())
             S = round(deltaS_DNA(self.input.text()))
+            G = round(deltaG_DNA(self.input.text()))
             H = round(deltaH_DNA(self.input.text()))*1000
             Tm = temp_DNA_melt(self.input.text(), float(concentration_DNA), float(
                 concentration_K), float(concentration_Mg))
             self.label_features.setText(f'Свойства: длина в нк. = {len(
-                self.input.text())}, deltaS = {S}, deltaH = {H}, Tm = {Tm} °C, Ta ~ 0 °C')
+                self.input.text())}, GC = {GC}%, deltaS = {S}, deltaH = {H}, deltaG = {G}, Tm = {Tm} °C, Ta ~ 0 °C')
         except KeyError:
             self.label_features.setText(
                 'Неправильные символы или наличие пробелов в последовательности')
@@ -126,14 +128,16 @@ class Sample(QLabel):
         except ValueError:
             self.label_features.setText(
                 'Значение концентрации ионов и ДНК должно быть больше 0')
+        except ZeroDivisionError:
+            pass
 
     def sample_seq(self):
         concentration_DNA = w.data_conc_DNA.text()
         concentration_K = w.data_conc_K.text()
         concentration_Mg = w.data_conc_Mg.text()
         try:
-            melt_data = DnaFraction(float(concentration_DNA)/1000000, temp, deltaS_DNA(self.input.text(
-            )), deltaH_DNA(self.input.text())*1000, float(concentration_K), float(concentration_Mg))
+            melt_data = DnaFraction(float(concentration_DNA)/1E6, temp, deltaS_DNA(self.input.text(
+            )), deltaH_DNA(self.input.text())*1E3, float(concentration_K), float(concentration_Mg))
             dif_data = numpy.diff(melt_data)
             list_samples.update({self.label.text(): melt_data})
             dif_samples.update({self.label.text(): numpy.abs(dif_data)})
@@ -160,16 +164,18 @@ class Sample(QLabel):
                 pass
 
     def homodimer_analyze(self):
+        w.tab_lay.setCurrentIndex(2)
         w.widget_03.setText(f"{self.label.text()}\n")
         result = sorted(dimers_analyze(self.input.text(), self.input.text(
         )), key=lambda x: x[1].count('I'), reverse=True)
-        for string in result:
-            for str in string:
-                w.widget_03.append(str)
+        for line in result:
+            for string in line:
+                w.widget_03.append(str(string))
             w.widget_03.append('---------------------------')
             w.widget_03.append('')
 
     def heterodimer_analyze(self):
+        w.tab_lay.setCurrentIndex(2)
         w.widget_03.setText(f"{self.label.text()}\n")
         result = []
         if len(seq_samples) > 0:
@@ -210,7 +216,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.resize(800, 600)
+        self.resize(1024, 860)
+        self.setWindowIcon(QIcon(r"D:\06_Python\TPD ver.1.03\HRM.png"))
 
         # список виджетов
         self.label_conc_DNA = QLabel('Концентрация ДНК (мкМ)')

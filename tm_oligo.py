@@ -1,14 +1,14 @@
 from math import *
 import numpy
 
-NN_list_G = {'AA': -0.55, 'TT': -0.55, 'CC': -1.25, 'GG': -1.25, 'AT': -0.28, 'TA': -0.16, 'AC': -0.89, 'CA':
-             -1.00, 'AG': -0.91, 'GA': -0.87, 'CG': -1.25, 'GC': -1.31, 'TC': -0.87, 'CT': -0.91, 'TG': -1.00, 'GT': -0.89}
+NN_list_G = {'AA': -1, 'TT': -1, 'CC': -1.84, 'GG': -1.84, 'AT': -0.88, 'TA': -0.58, 'AC': -1.44, 'CA':
+             -1.45, 'AG': -1.28, 'GA': -1.30, 'CG': -2.17, 'GC': -2.24, 'TC': -1.30, 'CT': -1.28, 'TG': -1.45, 'GT': -1.44}
 
-NN_list_S = {'AA': -19.2, 'TT': -19.2, 'CC': -8.9, 'GG': -8.9, 'AT': -29.4, 'TA': -13.3, 'AC': -26.8, 'CA': -38.8,
-             'AG': -7.9, 'GA': -13.0, 'CG': -16.1, 'GC': -9.3, 'TC': -13.0, 'CT': -7.9, 'TG': -38.8, 'GT': -26.8}
+NN_list_S = {'AA': -22.2, 'TT': -22.2, 'CC': -19.9, 'GG': -19.9, 'AT': -20.4, 'TA': -21.3, 'AC': -22.4, 'CA': -22.7,
+             'AG': -21.0, 'GA': -22.2, 'CG': -27.2, 'GC': -24.4, 'TC': -22.2, 'CT': -21.0, 'TG': -22.7, 'GT': -22.4}
 
-NN_list_H = {'AA': -6.5, 'TT': -6.5, 'CC': -4.0, 'GG': -4.0, 'AT': -9.4, 'TA': -4.3, 'AC': -13.1, 'CA':
-             -13.1, 'AG': -3.4, 'GA': -4.9, 'CG': -6.4, 'GC': -4.2, 'TC': -4.9, 'CT': -3.4, 'TG': -13.1, 'GT': -9.2}
+NN_list_H = {'AA': -7.9, 'TT': -7.9, 'CC': -8.0, 'GG': -8.0, 'AT': -7.2, 'TA': -7.2, 'AC': -8.4, 'CA':
+             -8.5, 'AG': -7.8, 'GA': -8.2, 'CG': -10.6, 'GC': -9.8, 'TC': -8.2, 'CT': -7.8, 'TG': -8.5, 'GT': -8.4}
 
 
 def DnaFraction(Ct, T, DeltaS, DeltaH, CtK=50, CtMg=3, R=1.987):
@@ -26,9 +26,9 @@ def DnaFraction(Ct, T, DeltaS, DeltaH, CtK=50, CtMg=3, R=1.987):
     salt = (CtK/1000) + 4 * (CtMg/1000)**0.5
     CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH /
                            (R*T-16.6*log10(salt/(1.0+0.7*salt))))
-
     # Compute f
     f = (1 + CtKeq - numpy.sqrt(1 + 2*CtKeq)) / CtKeq
+
     return f
 
 
@@ -84,7 +84,7 @@ def deltaG_DNA(sequence):
     return sum_G
 
 
-def temp_DNA_melt(sequence, CtDNA, CtK, CtMg):
+# def temp_DNA_melt(sequence, CtDNA, CtK, CtMg):
     if len(sequence) > 0:
         salt = (CtK/1000) + 4 * (CtMg/1000)**0.5
         deltaH = deltaH_DNA(sequence)*1000
@@ -94,21 +94,24 @@ def temp_DNA_melt(sequence, CtDNA, CtK, CtMg):
         return Tm
 
 
-def GC_features(sequence):
-    countG = sequence.count('G')
-    countC = sequence.count('C')
+def GC_features(sequence: str):
+    countG = sequence.upper().count('G')
+    countC = sequence.upper().count('C')
     result = (countG+countC)/len(sequence)
-    return result
+    return round(result*100)
 
 
-def dimers_analyze(seq1, seq2):
+def dimers_analyze(seq1: str, seq2: str):
     result = []
+    seq1 = seq1.upper()
+    seq2 = seq2.upper()
     rows = len(seq1)
     cols = len(seq2)
     seq2 = seq2[::-1]
     for i in range(1, cols + rows):
         sub_result = []
         bounds = ''
+        deltaG = ''
         start_column = max(0, i - rows)
         end_column = min(i, cols)
         for j in range(start_column, end_column):
@@ -116,17 +119,38 @@ def dimers_analyze(seq1, seq2):
             m = j
             if (seq1[n] == 'A' and seq2[m] == 'T') or (seq1[n] == 'T' and seq2[m] == 'A'):
                 bounds += 'I'
+                deltaG += str(n) + " "
             elif (seq1[n] == 'C' and seq2[m] == 'G') or (seq1[n] == 'G' and seq2[m] == 'C'):
                 bounds += 'I'
+                deltaG += str(n) + " "
             else:
                 bounds += '-'
+                deltaG += '-'
 
         bounds = bounds.replace('-I-', '-*-')
+        deltaG = [position.split() for position in deltaG.split('-')
+                  if len(position.strip()) > 2]
+        if len(deltaG) != 0:
+            deltaG = sum([sum([NN_list_G[seq1[int(numbers):int(numbers)+2]]
+                         for numbers in position if len(seq1[int(numbers):int(numbers)+2]) > 1]) for position in deltaG])
 
         if bounds.count('I') > 2:
             sub_result.append(f"{' ' * (m) + "5'-" + seq1}-3'")
             sub_result.append(f"   {' ' * max(n, m) + bounds}")
             sub_result.append(f"{' ' * (n) + "3'-" + seq2}-5'")
+            sub_result.append(
+                f"\n deltG {deltaG} ккал/моль")
             result.append(sub_result)
 
     return result
+
+
+def temp_DNA_melt(sequence, CtDNA, CtK, CtMg):
+    if len(sequence) > 0:
+        salt = (CtK/1000) + 4 * (CtMg/1000)**0.5
+        deltaH = deltaH_DNA(sequence)*1000
+        deltaG = deltaG_DNA(sequence)*1000
+        deltaS = deltaS_DNA(sequence)
+        Tm = (deltaH/(deltaS+1.987*log(CtDNA/1000000))) + \
+            (16.6*log10(salt/(1.0+0.7*salt))) - 273.15
+        return Tm
