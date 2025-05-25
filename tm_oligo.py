@@ -131,13 +131,15 @@ def dimers_analyze(seq1: str, seq2: str):
         deltaG = [position.split() for position in deltaG.split('-')
                   if len(position.strip()) > 2]
         if len(deltaG) != 0:
-            deltaG = sum([sum([NN_list_G[seq1[int(numbers):int(numbers)+2]]
+            deltaG = sum([sum([NN_list_G[seq1.replace('+', '')[int(numbers):int(numbers)+2]]
                          for numbers in position if len(seq1[int(numbers):int(numbers)+2]) > 1]) for position in deltaG])
 
         if bounds.count('I') > 2:
-            sub_result.append(f"{' ' * (m) + "5'-" + seq1}-3'")
+            sub_result.append(
+                f"{' ' * (m) + "5'-" + seq1.replace('+', '')}-3'")
             sub_result.append(f"   {' ' * max(n, m) + bounds}")
-            sub_result.append(f"{' ' * (n) + "3'-" + seq2}-5'")
+            sub_result.append(
+                f"{' ' * (n) + "3'-" + seq2.replace('+', '')}-5'")
             sub_result.append(
                 f"\n deltG {deltaG} ккал/моль")
             result.append(sub_result)
