@@ -8,8 +8,10 @@ class TBar(QToolBar):
 
         self.button_open = QAction('ОТКРЫТЬ ФАЙЛ', self)
         self.button_save = QAction('СОХРАНИТЬ ДАННЫЕ', self)
+        self.button_information = QAction('ИНФОРМАЦИЯ О ПРОГРАММЕ', self)
         self.addAction(self.button_open)
         self.addAction(self.button_save)
+        self.addAction(self.button_information)
 
         self.setStyleSheet('background-color: lightgray; border-radius: 4px;')
 
@@ -26,3 +28,5 @@ class TBar(QToolBar):
                 return file.read()
         else:
             return False
+
+    

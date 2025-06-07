@@ -409,6 +409,7 @@ class MainWindow(QMainWindow):
         self.bar = TBar()
         self.bar.button_save.triggered.connect(self.save_data)
         self.bar.button_open.triggered.connect(self.open_data)
+        self.bar.button_information.triggered.connect(self.information)
 
         self.lay_bar = QVBoxLayout()
         self.lay_bar.addWidget(self.bar)
@@ -439,6 +440,21 @@ class MainWindow(QMainWindow):
                 if len(line.split()) == 2:
                     self.sample_add()
                     self.sample.input.setText(line.split()[1])
+
+    def information(self):
+        self.new_window = QWidget()
+        self.new_window.resize(600, 400)
+        self.new_window.setWindowTitle('О программе')
+
+        layout = QVBoxLayout()
+        label = QLabel(
+            "Здравствуйте!\nПрограмма предназначена для анализа ДНК последовательностей длиной до 100 нуклеотидов.\n В основе математических вычислений лежит модель ближайших соседей.\n"
+            "Hatim T. Allawi and John SantaLucia, Jr. Thermodynamics and NMR of Internal G‚T Mismatches in DNA. Biochemistry 1997, 36, 10581-10594.\n"
+            "Tm = (deltaH/(deltaS+1.987*log(CtDNA/1000000))) + (16.6*log10(salt/(1.0+0.7*salt))) - 273.15")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
+        self.new_window.setLayout(layout)
+        self.new_window.show()
 
     def sample_add(self):
         self.count += 1
