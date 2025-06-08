@@ -2,7 +2,7 @@ import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from PyQt6.QtWidgets import (QApplication, QWidget, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout,
-                             QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget)
+                             QLabel, QSizePolicy, QTextEdit, QLineEdit, QScrollArea, QCheckBox, QSlider, QTabWidget, QTextBrowser)
 from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import QFont, QIcon
 from tm_oligo import deltaS_DNA, deltaH_DNA, deltaG_DNA, temp_DNA_melt, GC_features, DnaFraction, dimers_analyze, middles
@@ -449,8 +449,13 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         label = QLabel(
             "Здравствуйте!\nПрограмма предназначена для анализа ДНК последовательностей длиной до 100 нуклеотидов.\n В основе математических вычислений лежит модель ближайших соседей.\n"
-            "Hatim T. Allawi and John SantaLucia, Jr. Thermodynamics and NMR of Internal G‚T Mismatches in DNA. Biochemistry 1997, 36, 10581-10594.\n"
-            "Tm = (deltaH/(deltaS+1.987*log(CtDNA/1000000))) + (16.6*log10(salt/(1.0+0.7*salt))) - 273.15\n"
+            "Hatim T. Allawi and John SantaLucia, Jr. Thermodynamics and NMR of Internal G‚T Mismatches in DNA. Biochemistry 1997, 36, 10581-10594.\n\n"
+            "Расчёт темпераутры плавления производиться по следующей формуле:\n"
+            "Tm = (deltaH/(deltaS+1.987*log(CtDNA/1000000))) + (16.6*log10(salt/(1.0+0.7*salt))) - 273.15\n\n"
+            "Расчёт терпмодинамического профиля по формуле:\n"
+            "salt = (CtK/1000) + 4 * (CtMg/1000)**0.5\n"
+            "CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH/(R*T-16.6*log10(salt/(1.0+0.7*salt))))\n"
+            "f = (1 + CtKeq - numpy.sqrt(1 + 2*CtKeq)) / CtKeq\n\n"
             "Версия 1.0.3 от 07 июня 2025")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)

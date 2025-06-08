@@ -24,8 +24,7 @@ def DnaFraction(Ct, T, DeltaS, DeltaH, CtK=50, CtMg=3, R=1.987):
     """
     # Compute Ct * Keq
     salt = (CtK/1000) + 4 * (CtMg/1000)**0.5
-    CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH /
-                           (R*T-16.6*log10(salt/(1.0+0.7*salt))))
+    CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH/(R*T-16.6*log10(salt/(1.0+0.7*salt))))
     # Compute f
     f = (1 + CtKeq - numpy.sqrt(1 + 2*CtKeq)) / CtKeq
 
