@@ -450,7 +450,8 @@ class MainWindow(QMainWindow):
         label = QLabel(
             "Здравствуйте!\nПрограмма предназначена для анализа ДНК последовательностей длиной до 100 нуклеотидов.\n В основе математических вычислений лежит модель ближайших соседей.\n"
             "Hatim T. Allawi and John SantaLucia, Jr. Thermodynamics and NMR of Internal G‚T Mismatches in DNA. Biochemistry 1997, 36, 10581-10594.\n"
-            "Tm = (deltaH/(deltaS+1.987*log(CtDNA/1000000))) + (16.6*log10(salt/(1.0+0.7*salt))) - 273.15")
+            "Tm = (deltaH/(deltaS+1.987*log(CtDNA/1000000))) + (16.6*log10(salt/(1.0+0.7*salt))) - 273.15\n"
+            "Версия 1.0.3 от 07 июня 2025")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)
         self.new_window.setLayout(layout)
