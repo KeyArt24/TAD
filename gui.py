@@ -16,6 +16,7 @@ matplotlib.use('QtAgg')
 list_samples = {}
 dif_samples = {}
 seq_samples = {}
+count_samples = 0
 temp = numpy.array([i * 0.1 for i in range(0, 1000)]) + 278.15
 temp_plot = numpy.array([i * 0.1 for i in range(0, 1000)])
 temp_dif = numpy.array(middles(temp)) - 278.15
@@ -48,9 +49,10 @@ class Sample(QLabel):
 
         # виджеты
         self.box = QCheckBox()
-        self.label = QLabel('SAMPLE')
+        self.index = QLabel('0')
+        self.label = QLineEdit(f'SAMPLE {w.index}')
         self.input = QLineEdit()
-        self.label_features = QLabel(
+        self.label_features = QLineEdit(
             'Свойства: длина в нк. = 0, GC = 0%, deltaS = 0, deltaH = 0, deltaG = 0, Tm = 0 °C, Ta ~ 0 °C')
         self.button_del = QPushButton(' УДАЛИТЬ ')
         self.button_homo_dimer = QPushButton(' Гомодимеры ')
@@ -60,6 +62,9 @@ class Sample(QLabel):
         self.in_lay_sample = QHBoxLayout()
 
         # свойства виджетов
+        self.label.setFixedWidth(100)
+        self.label.setFixedHeight(30)
+        self.label.setStyleSheet("background-color: white")
         self.button_del.setSizePolicy(
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         self.button_homo_dimer.setSizePolicy(
@@ -102,9 +107,10 @@ class Sample(QLabel):
     def sample_del(self):
         self.box.setCheckState(Qt.CheckState.Unchecked)
         self.close()
+        print(w.index)
         try:
-            del list_samples[self.label.text()]
-            del seq_samples[self.label.text()]
+            del list_samples[self.index.text()]
+            del seq_samples[self.index.text()]
         except KeyError:
             pass
 
@@ -119,8 +125,8 @@ class Sample(QLabel):
             H = round(deltaH_DNA(self.input.text()))*1000
             Tm = temp_DNA_melt(self.input.text(), float(concentration_DNA), float(
                 concentration_K), float(concentration_Mg))
-            self.label_features.setText(f'Свойства: длина в нк. = {len(
-                self.input.text())}, GC = {GC}%, deltaS = {S}, deltaH = {H}, deltaG = {G}, Tm = {Tm} °C, Ta ~ 0 °C')
+            self.label_features.setText(
+                f'Свойства: длина в нк. = {len(self.input.text())}, GC = {GC}%, deltaS = {S}, deltaH = {H}, deltaG = {G}, Tm = {Tm} °C, Ta ~ 0 °C')
         except KeyError:
             self.label_features.setText(
                 'Неправильные символы или наличие пробелов в последовательности')
@@ -139,9 +145,12 @@ class Sample(QLabel):
             melt_data = DnaFraction(float(concentration_DNA)/1E6, temp, deltaS_DNA(self.input.text(
             )), deltaH_DNA(self.input.text())*1E3, float(concentration_K), float(concentration_Mg))
             dif_data = numpy.diff(melt_data)
-            list_samples.update({self.label.text(): melt_data})
-            dif_samples.update({self.label.text(): numpy.abs(dif_data)})
-            seq_samples.update({self.label.text(): self.input.text()})
+            list_samples.update(
+                {self.index.text(): [self.label.text(), melt_data]})
+            dif_samples.update(
+                {self.index.text(): [self.label.text(), numpy.abs(dif_data)]})
+            seq_samples.update(
+                {self.index.text(): [self.label.text(), self.input.text()]})
         except KeyError:
             self.label_features.setText(
                 'Неправильные символы или наличие пробелов в последовательности')
@@ -157,9 +166,9 @@ class Sample(QLabel):
             self.setStyleSheet(
                 "background-color: lightgray; border-radius: 5px")
             try:
-                del list_samples[self.label.text()]
-                del seq_samples[self.label.text()]
-                del dif_samples[self.label.text()]
+                del list_samples[self.index.text()]
+                del seq_samples[self.index.text()]
+                del dif_samples[self.index.text()]
             except KeyError:
                 pass
 
@@ -179,10 +188,10 @@ class Sample(QLabel):
         w.widget_03.setText(f"{self.label.text()}\n")
         result = []
         if len(seq_samples) > 0:
-            for key, seq in seq_samples.items():
-                if self.label.text() != key:
-                    result.append([f'\n{self.label.text()} AND {key}\n'])
-                    result += sorted(dimers_analyze(self.input.text(), seq),
+            for key, value in seq_samples.items():
+                if self.label.text() != value[0]:
+                    result.append([f'\n{self.label.text()} AND {value[0]}\n'])
+                    result += sorted(dimers_analyze(self.input.text(), value[1]),
                                      key=lambda x: x[1].count('I'), reverse=True)
             for string in result:
                 for str in string:
@@ -196,20 +205,23 @@ class Thread(QThread):
         self.sc = mainwindow
 
     def run(self):
-        self.sc.axes.cla()
-        if len(self.sc.data) > 0:
-            for key, values in self.sc.data.items():
-                self.sc.axes.plot(self.sc.temp, values, label=key)
-                self.sc.axes.legend()
-        else:
-            self.sc.axes.plot(
-                self.sc.temp, [0 for i in range(len(self.sc.temp))])
+        try:
+            self.sc.axes.cla()
+            if len(self.sc.data) > 0:
+                for key, values in self.sc.data.items():
+                    self.sc.axes.plot(self.sc.temp, values[1], label=values[0])
+                    self.sc.axes.legend()
+            else:
+                self.sc.axes.plot(
+                    self.sc.temp, [0 for i in range(len(self.sc.temp))])
 
-        self.sc.axes.set_xlabel(self.sc.name_x)
-        self.sc.axes.set_ylabel(self.sc.name_y)
-        self.sc.axes.grid(which='both', linestyle='--', drawstyle='steps')
-        self.sc.axes.set_xticks(numpy.arange(0, 101, step=5))
-        self.sc.draw()
+            self.sc.axes.set_xlabel(self.sc.name_x)
+            self.sc.axes.set_ylabel(self.sc.name_y)
+            self.sc.axes.grid(which='both', linestyle='--', drawstyle='steps')
+            self.sc.axes.set_xticks(numpy.arange(0, 101, step=5))
+            self.sc.draw()
+        except RuntimeError:
+            pass
 
 
 class MainWindow(QMainWindow):
@@ -263,6 +275,8 @@ class MainWindow(QMainWindow):
         self.lay_DW = QVBoxLayout()
         self.lay_samples = QVBoxLayout()
         self.tab_lay = QTabWidget()
+
+        self.index = 0
 
         # plot tm
 
@@ -365,8 +379,6 @@ class MainWindow(QMainWindow):
         self.slider_Mg.valueChanged.connect(self.changed_Mg)
         self.data_conc_Mg.textChanged.connect(self.changed_slide_Mg)
 
-        self.count = 0
-
         self.widget_05 = QWidget()
 
         # подключение виджетов
@@ -423,7 +435,8 @@ class MainWindow(QMainWindow):
         container.setLayout(main_lay)
         self.setStyleSheet("background-color: rgb(0, 32, 78)")
         self.setCentralWidget(container)
-        self.setWindowTitle('TAD')
+        self.setWindowTitle(
+            'TAD: Termodynamic Analysis of DNA (KeyArt) v.1.1.3')
 
         # потоки
 
@@ -456,21 +469,24 @@ class MainWindow(QMainWindow):
             "salt = (CtK/1000) + 4 * (CtMg/1000)**0.5\n"
             "CtKeq = Ct * numpy.exp(DeltaS/R - DeltaH/(R*T-16.6*log10(salt/(1.0+0.7*salt))))\n"
             "f = (1 + CtKeq - numpy.sqrt(1 + 2*CtKeq)) / CtKeq\n\n"
-            "Версия 1.0.3 от 07 июня 2025")
+            "Версия 1.1.3 от 18 июня 2025")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)
         self.new_window.setLayout(layout)
         self.new_window.show()
 
     def sample_add(self):
-        self.count += 1
+        self.index += 1
         self.sample = Sample()
-        self.sample.label.setText(f'Олигонуклеотид {self.count}')
+        self.sample.index.setText(f'{self.index}')
         self.lay_samples.addWidget(self.sample)
         self.sample.box.clicked.connect(self.thread_update_plot)
         self.sample.box.checkStateChanged.connect(self.thread_update_plot)
         self.sample.box.checkStateChanged.connect(
             self.sample.is_sample_selected)
+
+        self.sample.label.textChanged.connect(self.sample.sample_seq)
+        self.sample.label.textChanged.connect(self.thread_update_plot)
         self.sample.input.textChanged.connect(self.thread_update_plot)
         self.sample.button_del.clicked.connect(self.thread_update_plot)
 
