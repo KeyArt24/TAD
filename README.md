@@ -23,4 +23,4 @@ The program structure and code can be viewed in the .py files.
 Gui.py, tool_bar.py contains the code for the graphical shell of the TAD program.
 tm_oligo.py contain contains the code for mathematical calculations of the thermodynamic profile, and analysis of dimers
 
-You can put the compiled code in exe. file [TAD(KeyGeneArt).exe] and run the program immediately for use.
+You can put the compiled code in exe. file [Thermodynamics Analysis of DNA v.1.1.8.exe] and run the program immediately for use.
