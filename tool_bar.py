@@ -16,16 +16,17 @@ class TBar(QToolBar):
         self.setStyleSheet('background-color: lightgray; border-radius: 4px;')
 
     def save_data(self, data=''):
-        path = QFileDialog().getSaveFileName()
+        path = QFileDialog().getSaveFileName(None, "Сохранить файл", "", "Text Files (*.txt);;All Files (*)")
         if len(path[0]) > 0:
             with open(path[0], 'w', encoding='utf-8') as file:
                 file.write(data)
 
     def open_file(self):
         window = QFileDialog().getOpenFileNames()
-        if len(window[0]) > 0:
-            with open(*window[0], 'r', encoding='utf-8') as file:
-                return file.read()
+        if len(window[0]) > 0 and window[0][0].endswith('.txt'):
+            with open(*window[0], 'r', encoding='utf-8', errors='ignore') as file:
+                data = file.read()
+                return data
         else:
             return False
 
