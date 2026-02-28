@@ -2,7 +2,7 @@ TAD (Thermodynamic Analysis of DNA). Programm for design and Tm analysis oligo D
 The program allows you to analyze DNA molecules to determine the thermodynamic profile, the formation of homo- and hetero- dimers.
 
 Thermodynamic Analysis of DNA
-![image](https://github.com/user-attachments/assets/a5f83cec-2adc-476a-9e38-02219227d8af)
+<img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/708e665f-c7aa-431f-8a10-832624fbb474" />
 
 Derivative of the function
 ![image](https://github.com/user-attachments/assets/18d29641-b0d7-42fb-bf8a-7bd71e05c863)
