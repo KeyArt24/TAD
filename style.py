@@ -1,5 +1,7 @@
-
-
+"""
+CSS styles for the DNA Thermodynamic Analysis application.
+Contains scrollbar styles, tab styles, and button styles.
+"""
 
 scroll_vertical = """
     QScrollBar:vertical
@@ -13,7 +15,7 @@ scroll_vertical = """
 
     QScrollBar::handle:vertical
     {
-        background-color: gray;         /* #605F5F; */
+        background-color: gray;
         min-height: 5px;
         border-radius: 4px;
     }
@@ -52,19 +54,19 @@ scroll_vertical = """
 scroll_horizontal = """
     QScrollBar:horizontal {
         border: 1px transparent #2A2929;
-        background: gray;
+        background: white;
         height: 10px;
         border-radius: 4px;
 
     }
-    
+
     QScrollBar::handle:horizontal
     {
-        background-color: lightgray;         /* #605F5F; */
+        background-color: gray;
         min-width: 5px;
         border-radius: 4px;
     }
-    
+
     QScrollBar::sub-line:width
     {
         margin: 3px 0px 3px 0px;
@@ -74,7 +76,7 @@ scroll_horizontal = """
         subcontrol-position: top;
 
     }
-    
+
     QScrollBar::add-line:horizontal
     {
         margin: 3px 0px 3px 0px;
@@ -84,7 +86,7 @@ scroll_horizontal = """
         subcontrol-position: bottom;
         subcontrol-origin: margin;
     }
-    
+
     QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal
     {
         background: none;
@@ -94,13 +96,14 @@ scroll_horizontal = """
     {
         background: none;
     }
-    
-    """
+"""
 
 tab_lay = '''
-            QTabBar::tab-bar {alignment: center}
-            QTabBar::tab  {background-color:rgb(220, 220, 220); border-radius: 4px; height: 20px; width: 150px; margin: 2px;}
-            QTabWidget::pane {position; absolute}
-            '''
+    QTabBar::tab-bar {alignment: center}
+    QTabBar::tab  {background-color:rgb(220, 220, 220); border-radius: 4px; height: 20px; width: 150px; margin: 2px;}
+    QTabWidget::pane {position; absolute}
+'''
 
 css_buttons_sample = "background-color: white; color: black"
+
+css_lines_filter = "background-color: white"
