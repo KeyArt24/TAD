@@ -2,20 +2,26 @@ TAD (Thermodynamic Analysis of DNA). Programm for design and Tm analysis oligo D
 The program allows you to analyze DNA molecules to determine the thermodynamic profile, the formation of homo- and hetero- dimers.
 
 Thermodynamic Analysis of DNA
-![image](https://github.com/user-attachments/assets/a5f83cec-2adc-476a-9e38-02219227d8af)
+<img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/89c11df1-9769-492d-a8d8-069f3f347815" />
 
 Derivative of the function
-![image](https://github.com/user-attachments/assets/18d29641-b0d7-42fb-bf8a-7bd71e05c863)
+<img width="1919" height="1029" alt="image" src="https://github.com/user-attachments/assets/0174d979-c06d-42c4-81a3-b43b5584a6f3" />
 
 Homodimers analysis
-![image](https://github.com/user-attachments/assets/2d27e247-32e1-4060-947d-e796d892b594)
+<img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/3a1ca0c8-1b19-4208-8a0e-e9677295d9b9" />
+
 
 Heterodimers analysis
-![image](https://github.com/user-attachments/assets/b2a7bcc1-5ff8-44bb-9b7e-02595e7c4270)
+<img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/b329c0f8-1c55-46db-af2e-17458b311140" />
 
+Loops analysis
+<img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/531aebf8-001f-479d-bf88-7cc4a73cd5ad" />
+
+Projection in df/dx, plot max hairpin in oligo
+<img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/13118704-d606-4796-b8cf-85237a44cad0" />
 
 The program structure and code can be viewed in the .py files.
 Gui.py, tool_bar.py contains the code for the graphical shell of the TAD program.
 tm_oligo.py contain contains the code for mathematical calculations of the thermodynamic profile, and analysis of dimers
 
-You can put the compiled code in exe. file [TAD(KeyGeneArt).exe] and run the program immediately for use.
+You can put the compiled code in exe. file (https://disk.yandex.ru/d/NMqs8aQmo4Fqxg) and run the program immediately for use.
